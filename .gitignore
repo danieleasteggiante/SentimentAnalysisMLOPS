@@ -1,4 +1,3 @@
 ../.idea
-.venv
-.env
+web_app/.venv
 login

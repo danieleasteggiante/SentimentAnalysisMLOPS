@@ -1,29 +1,26 @@
-from fastapi import APIRouter
 from fastapi.params import Depends
-from fastapi.security import OAuth2PasswordBearer
 from typing import Annotated
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
+
 from web_app.config.database import get_db
-from config.logger import logging
+from web_app.config.logger import logging
 
 LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 db_dependency = Annotated[Session, Depends(get_db)]
+templates = Jinja2Templates(directory="templates")  # crea la cartella `templates`
 
-user_service_dependency = Annotated[UserService,Depends(get_user_service)]
 
-@router.post("/api/")
-async def login_user(db: db_dependency, us : user_service_dependency, user: UserSerializer) -> JSONResponse:
-    try:
-        LOGGER.info("Login user")
-        email, password = user.email, user.password
-        existing_user = await us.get_user_if_exists(db, email, password)
-        if existing_user:
-            return await us.handle_existing_user(existing_user)
-        return JSONResponse(status_code=404, content={"message": "User not found"})
-    except ChildProcessError as e:
-        LOGGER.error("Error logging in user: %s", e)
-        return JSONResponse(status_code=404, content={"message": "Error logging in user"})
+@router.post("/index/")
+async def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "message": "Ciao da FastAPI"})
+
+
+
+
 
 
 

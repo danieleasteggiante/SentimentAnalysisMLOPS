@@ -4,13 +4,13 @@ services:
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
-      POSTGRES_DB: mydatabase
+      POSTGRES_DB: prediction
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myuser"]
+      test: ["CMD-SHELL", "pg_isready -U root"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -20,7 +20,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgres://root:root@db:5432/mydatabase
+      DATABASE_URL: postgresql+psycopg2://root:root@db:5432/prediction
     depends_on:
       db:
         condition: service_healthy
