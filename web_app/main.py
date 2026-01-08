@@ -3,8 +3,6 @@ from fastapi import FastAPI
 from config import database
 from config.database import engine
 from config.router import router as main_router
-from middleware.token_middleware import TokenMiddleware
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 app.include_router(main_router)
