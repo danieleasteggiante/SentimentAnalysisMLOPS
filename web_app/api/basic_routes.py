@@ -1,12 +1,9 @@
-import asyncio
-from typing import List
-
 from fastapi import APIRouter
 from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordBearer
 from typing import Annotated
 from fastapi.responses import JSONResponse
-from config.database import get_db
+from web_app.config.database import get_db
 from config.logger import logging
 
 LOGGER = logging.getLogger(__name__)
