@@ -5,3 +5,6 @@ model/.idea
 model/.venv
 model/outputs/tokenizer
 model/outputs/*.pkl
+.idea
+web_app/.idea
+web_app/__pycache__
