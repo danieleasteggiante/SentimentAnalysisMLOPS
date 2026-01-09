@@ -28,11 +28,9 @@ services:
         condition: service_healthy
     networks:
       - app-network
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8501/ || exit 1" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - hf-cache:/root/.cache/huggingface
 
   app:
     build: ./web_app
@@ -44,13 +42,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      model_server:
-        condition: service_healthy
     networks:
       - app-network
 
 volumes:
   db_data:
+  hf-cache:
 
 networks:
   app-network:
