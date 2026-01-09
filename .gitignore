@@ -1,3 +1,7 @@
 ../.idea
 web_app/.venv
 login
+model/.idea
+model/.venv
+model/outputs/tokenizer
+model/outputs/*.pkl
