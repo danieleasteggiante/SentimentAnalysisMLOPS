@@ -17,14 +17,34 @@ services:
       timeout: 5s
       retries: 5
 
+  model_server:
+    build: ./model_server
+    ports:
+      - "8501:8501"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://admin:admin@db:5432/prediction
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8501/ || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   app:
     build: ./web_app
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+psycopg2://admin:admin@db:5432/prediction
+      MODEL_SERVER_URL: http://model_server:8501
     depends_on:
       db:
+        condition: service_healthy
+      model_server:
         condition: service_healthy
     networks:
       - app-network
