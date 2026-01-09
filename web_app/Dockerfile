@@ -1,10 +1,9 @@
 FROM python:3.10.19-trixie
 WORKDIR /usr/local/app
 
-COPY requirements.txt ./
+COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
 EXPOSE 8080
 
 RUN useradd app
