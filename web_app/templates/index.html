@@ -1,147 +1,293 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Make a Sentiment Prediction</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg-1: #071018;
-      --bg-2: #0f1215;
-      --card: #0e1416;
-      --muted-gray: #2f3336;
-      --white: #ffffff;
-      --accent: #ff6a00;
-      --accent-dark: #d85a00;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
-      background:linear-gradient(180deg,var(--bg-1),var(--bg-2));
-      color:var(--white);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-    }
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>Make a Sentiment Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-1: #071018;
+            --bg-2: #0f1215;
+            --card: #0e1416;
+            --muted-gray: #2f3336;
+            --white: #ffffff;
+            --accent: #ff6a00;
+            --accent-dark: #d85a00;
+        }
 
-    /* Header / Nav */
-    header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:20px 40px;
-      max-width:1200px;
-      margin:0 auto;
-    }
-    .brand{
-      font-weight:700;
-      letter-spacing:1px;
-      font-size:18px;
-      color:var(--white);
-    }
-    nav a{
-      color:rgba(255,255,255,0.75);
-      text-decoration:none;
-      margin-left:28px;
-      font-weight:500;
-    }
-    nav a:hover{color:var(--white)}
+        * {
+            box-sizing: border-box
+        }
 
-    /* Main card */
-    .hero{
-      max-width:920px;
-      margin:40px auto 0;
-      padding:48px 40px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:12px;
-      box-shadow:0 8px 30px rgba(2,6,10,0.6);
-      text-align:center;
-    }
-    .title{
-      font-size:28px;
-      font-weight:700;
-      letter-spacing:2px;
-      text-transform:uppercase;
-      margin:6px 0 18px;
-      color:var(--white);
-    }
-    .subtitle{
-      max-width:780px;
-      margin:0 auto 28px;
-      color:rgba(255,255,255,0.82);
-      font-weight:300;
-      line-height:1.5;
-    }
+        html, body {
+            height: 100%
+        }
 
-    form {display:flex; flex-direction:column; gap:14px; align-items:center;}
-    textarea.input-text{
-      width:100%;
-      max-width:820px;
-      min-height:120px;
-      resize:vertical;
-      background:var(--muted-gray);
-      color:var(--white);
-      border:1px solid rgba(255,255,255,0.04);
-      padding:14px 16px;
-      border-radius:10px;
-      font-size:15px;
-      outline:none;
-    }
-    textarea.input-text::placeholder{ color:rgba(255,255,255,0.6) }
+        body {
+            margin: 0;
+            font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+            color: var(--white);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-    .controls{
-      display:flex;
-      gap:12px;
-      align-items:center;
-    }
-    button.primary{
-      background:linear-gradient(180deg,var(--accent),var(--accent-dark));
-      color:#fff;
-      border:none;
-      padding:12px 20px;
-      border-radius:10px;
-      font-weight:700;
-      letter-spacing:1px;
-      cursor:pointer;
-      text-transform:uppercase;
-      box-shadow:0 6px 18px rgba(255,106,0,0.16);
-    }
-    button.primary:hover{ transform:translateY(-2px); box-shadow:0 10px 26px rgba(255,106,0,0.2) }
+        /* Header / Nav */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-    @media (max-width:640px){
-      header{padding:16px}
-      .hero{margin:20px 16px; padding:28px}
-      .title{font-size:20px}
-    }
-  </style>
+        .brand {
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-size: 18px;
+            color: var(--white);
+        }
+
+        nav a {
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            margin-left: 28px;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: var(--white)
+        }
+
+        /* Main card */
+        .hero {
+            max-width: 920px;
+            margin: 40px auto 0;
+            padding: 48px 40px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(2, 6, 10, 0.6);
+            text-align: center;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 6px 0 18px;
+            color: var(--white);
+        }
+
+        .subtitle {
+            max-width: 780px;
+            margin: 0 auto 28px;
+            color: rgba(255, 255, 255, 0.82);
+            font-weight: 300;
+            line-height: 1.5;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            align-items: center;
+        }
+
+        textarea.input-text {
+            width: 100%;
+            max-width: 820px;
+            min-height: 120px;
+            resize: vertical;
+            background: var(--muted-gray);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        textarea.input-text::placeholder {
+            color: rgba(255, 255, 255, 0.6)
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        button.primary {
+            background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 6px 18px rgba(255, 106, 0, 0.16);
+        }
+
+        button.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 26px rgba(255, 106, 0, 0.2)
+        }
+
+        /* feedback buttons */
+        .feedback-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        .fb-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--white);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .fb-btn:hover { opacity: 0.9 }
+
+        .fb-btn[disabled] { opacity: 0.5; cursor: default }
+        @media (max-width: 640px) {
+            header {
+                padding: 16px
+            }
+
+            .hero {
+                margin: 20px 16px;
+                padding: 28px
+            }
+
+            .title {
+                font-size: 20px
+            }
+        }
+
+
+        .hidden {
+            display: none;
+        }
+
+    </style>
 </head>
 <body>
-  <header>
+<header>
     <div class="brand">SENTIMENT LAB</div>
     <nav>
-      <a href="/static/index/">Home</a>
-      <a href="/static/contacts">Contatti</a>
+        <a href="/static/index/">Home</a>
+        <a href="/static/contacts">Contatti</a>
     </nav>
-  </header>
+</header>
 
-  <main>
+<main>
     <section class="hero" role="region" aria-labelledby="main-title">
-      <h1 id="main-title" class="title">MAKE A SENTIMENT PREDICTION</h1>
-      <p class="subtitle">
-        This site allows you to perform sentiment analysis from a text input.
-        Paste or write any sentence or paragraph and click "Make a prediction" to evaluate
-        whether the sentiment is positive, negative or neutral.
-      </p>
-
-      <form action="/predict" method="post">
-        <textarea name="text" class="input-text" placeholder="Insert text here..."></textarea>
+        <h1 id="main-title" class="title">MAKE A SENTIMENT PREDICTION</h1>
+        <p class="subtitle">
+            This site allows you to perform sentiment analysis from a text input.
+            Paste or write any sentence or paragraph and click "Make a prediction" to evaluate
+            whether the sentiment is positive, negative or neutral.
+        </p>
+        <textarea id="message" name="text" class="input-text" placeholder="Insert text here..."></textarea>
         <div class="controls">
-          <button type="submit" class="primary">Make a prediction</button>
+            <button type="submit" id="makePrediction" onclick="makePrediction" class="primary">Make a prediction
+            </button>
         </div>
-      </form>
     </section>
-  </main>
+    <section>
+        <div class="hero hidden" role="region" id="predictionResult"></div>
+        <div class="feedback-controls hidden" id="feedbackControls">
+            <button class="fb-btn" id="likeBtn" onclick="like" title="Like">👍</button>
+            <button class="fb-btn" id="dislikeBtn" onclick="dislike" title="Dislike">👎</button>
+        </div>
+    </section>
+</main>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const textarea = document.getElementById('message');
+        const button = document.getElementById('makePrediction')
+        const resultEl = document.getElementById('predictionResult');
+        const feedbackControls = document.getElementById('feedbackControls');
+        button.addEventListener('click', makePrediction);
+
+        function makePrediction(event) {
+            event?.preventDefault();
+            const text = (textarea.value || '').trim();
+            if (!text) {
+                resultEl.textContent = 'Inserisci un testo.';
+                return;
+            }
+            button.disabled = true;
+            button.textContent = 'Predicting...';
+            performPredictionCall(text);
+        }
+
+        async function performPredictionCall(text) {
+            try {
+                const resp = await fetch('/static/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({"text" : text})
+                });
+                if (!resp.ok) {
+                    resultEl.textContent = `Errore: ${resp.status} ${resp.statusText}`;
+                    return;
+                }
+                const data = await resp.json();
+                const prediction = data.prediction[0];
+                resultEl.textContent = `Risultato: ${prediction.label} (${(prediction.score ?? '').toString()})`;
+                resultEl.classList.remove('hidden');
+                feedbackControls.classList.remove('hidden');
+            } catch (err) {
+                resultEl.textContent = `Errore: ${err.message}`;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Make a prediction';
+            }
+        }
+
+        function like(event) {
+            event?.preventDefault();
+            sendFeedback('LIKE')
+
+        }
+        function dislike(event) {
+            event?.preventDefault()
+            sendFeedback('DISLIKE')
+        }
+
+        function sendFeedback(type) {
+            const text = (textarea.value || '').trim();
+            if (!text) {
+                return;
+            }
+            fetch('/static/feedback', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({"text": text, "feedback": type})
+            }).then((resp) => {
+                if (resp.ok) {
+                    alert('Grazie per il tuo feedback!');
+                    return
+                }
+                alert(`Errore nell'invio del feedback: ${resp.status} ${resp.statusText}`);
+            }).catch((err) => {
+                alert(`Errore nell'invio del feedback: ${err.message}`);
+            });
+        }
+
+    });
+
+</script>
 </body>
 </html>

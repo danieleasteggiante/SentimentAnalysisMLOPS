@@ -5,20 +5,29 @@ from entity.ModelVersion import ModelVersion
 
 LOGGER = logging.getLogger(__name__)
 
-def inference(db, text):
-    tokenizer_dir = "../outputs/tokenizer"
-    state_path = f"../outputs/model_state_v{__get_model(db)}.pkl"
-    base_model_name = "cardiffnlp/twitter-roberta-base-sentiment-latest"
-    num_labels = 3
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir, local_files_only=True)
-    model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=num_labels)
-    state = torch.load(state_path, map_location="cpu")
-    model.load_state_dict(state)
+tokenizer = None
+model = None
+sentiment = None
+
+async def __load_model(db):
+    global tokenizer, model, sentiment
+    if sentiment is not None:
+        return
+    MODEL_NAME = await __get_model_name(db)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+    model.to(torch.device("cpu"))
     model.eval()
-    sentiment = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
+    sentiment = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=-1)
+
+async def inference(db, text):
+    await __load_model(db)
     result = sentiment(text)
     LOGGER.info(result)
     return result
 
-def __get_model(db):
-    return db.query(ModelVersion).order_by(ModelVersion.version.desc()).first()
+async def __get_model_name(db):
+    result = db.query(ModelVersion).order_by(ModelVersion.version.desc()).first()
+    if result.version is None:
+        return f"{result.model_name}"
+    return f"{result.model_name}_v{result.version}"

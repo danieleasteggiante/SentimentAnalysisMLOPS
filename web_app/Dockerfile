@@ -1,4 +1,8 @@
-FROM python:3.10.19-trixie
+FROM python:3.10-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /usr/local/app
 
 COPY requirements.txt .

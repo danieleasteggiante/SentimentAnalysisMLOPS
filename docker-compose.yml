@@ -9,6 +9,7 @@ services:
       - "5555:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./db/initdb:/docker-entrypoint-initdb.d:ro
     networks:
       - app-network
     healthcheck:
@@ -20,7 +21,7 @@ services:
   model_server:
     build: ./model
     ports:
-      - "8501:8501"
+      - "8501:8080"
     environment:
       DATABASE_URL: postgresql+psycopg2://admin:admin@db:5432/prediction
     depends_on:
@@ -35,10 +36,10 @@ services:
   app:
     build: ./web_app
     ports:
-      - "8000:8000"
+      - "8000:8080"
     environment:
       DATABASE_URL: postgresql+psycopg2://admin:admin@db:5432/prediction
-      MODEL_SERVER_URL: http://model_server:8501
+      MODEL_SERVER_URL: http://model_server:8080
     depends_on:
       db:
         condition: service_healthy

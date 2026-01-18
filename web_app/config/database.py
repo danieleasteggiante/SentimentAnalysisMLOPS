@@ -1,9 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-import os
-
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql+psycopg2://admin:admin@localhost:5555/prediction')
+from config.constants import DATABASE_URL
 
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
