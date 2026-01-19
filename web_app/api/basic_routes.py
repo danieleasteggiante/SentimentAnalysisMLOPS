@@ -9,6 +9,7 @@ from starlette.responses import JSONResponse
 from config.constants import MODEL_SERVER_URL
 from config.database import get_db
 from config.logger import logging
+from model.feedback import Feedback
 
 LOGGER = logging.getLogger(__name__)
 router = APIRouter()
@@ -40,6 +41,21 @@ async def predict(request: Request):
 
     LOGGER.error("Error from model server: %s", resp.text)
     return JSONResponse(status_code=500, content={"message": "Error from model server"})
+
+
+@router.post("/feedback")
+async def feedback(request: Request, db: db_dependency):
+    try:
+        data = await request.json()
+        feedback_result = data.get("feedback")
+        username = data.get("username")
+        db.add(Feedback(feedback_result=feedback_result, username=username))
+        db.commit()
+        LOGGER.info("Received feedback - Text: %s, User Label: %s", feedback, username)
+        return JSONResponse(status_code=200, content={"message": "Feedback received"})
+    except Exception as e:
+        LOGGER.error("Error saving feedback: %s", e)
+        return JSONResponse(status_code=500, content={"message": "Error saving feedback"})
 
 
 
