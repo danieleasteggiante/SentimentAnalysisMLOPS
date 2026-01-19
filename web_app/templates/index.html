@@ -200,25 +200,30 @@
         </p>
         <textarea id="message" name="text" class="input-text" placeholder="Insert text here..."></textarea>
         <div class="controls">
-            <button type="submit" id="makePrediction" onclick="makePrediction" class="primary">Make a prediction
+            <button type="submit" id="makePrediction" class="primary">Make a prediction
             </button>
         </div>
     </section>
     <section>
         <div class="hero hidden" role="region" id="predictionResult"></div>
         <div class="feedback-controls hidden" id="feedbackControls">
-            <button class="fb-btn" id="likeBtn" onclick="like" title="Like">👍</button>
-            <button class="fb-btn" id="dislikeBtn" onclick="dislike" title="Dislike">👎</button>
+            <input type="text" id="usename" aria-label="Feedback controls"/>
+            <button class="fb-btn" id="likeBtn" title="Like">👍</button>
+            <button class="fb-btn" id="dislikeBtn" title="Dislike">👎</button>
         </div>
     </section>
 </main>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const textarea = document.getElementById('message');
-        const button = document.getElementById('makePrediction')
+        const makePredictionBtn = document.getElementById('makePrediction')
+        const likeBtn = document.getElementById('likeBtn');
+        const dislikeBtn = document.getElementById('dislikeBtn');
         const resultEl = document.getElementById('predictionResult');
         const feedbackControls = document.getElementById('feedbackControls');
-        button.addEventListener('click', makePrediction);
+        makePredictionBtn.addEventListener('click', makePrediction);
+        likeBtn.addEventListener('click', like);
+        dislikeBtn.addEventListener('click', dislike);
 
         function makePrediction(event) {
             event?.preventDefault();
@@ -227,8 +232,8 @@
                 resultEl.textContent = 'Inserisci un testo.';
                 return;
             }
-            button.disabled = true;
-            button.textContent = 'Predicting...';
+            makePredictionBtn.disabled = true;
+            makePredictionBtn.textContent = 'Predicting...';
             performPredictionCall(text);
         }
 
@@ -251,8 +256,8 @@
             } catch (err) {
                 resultEl.textContent = `Errore: ${err.message}`;
             } finally {
-                button.disabled = false;
-                button.textContent = 'Make a prediction';
+                makePredictionBtn.disabled = false;
+                makePredictionBtn.textContent = 'Make a prediction';
             }
         }
 
@@ -266,15 +271,17 @@
             sendFeedback('DISLIKE')
         }
 
-        function sendFeedback(type) {
+        async function sendFeedback(type) {
             const text = (textarea.value || '').trim();
-            if (!text) {
+            const usename = document.getElementById("usename")
+            if (usename.value === "") {
+                alert("Per favore, inserisci il tuo nome utente prima di inviare il feedback.");
                 return;
             }
             fetch('/static/feedback', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({"text": text, "feedback": type})
+                body: JSON.stringify({"feedback": text, "usename": usename})
             }).then((resp) => {
                 if (resp.ok) {
                     alert('Grazie per il tuo feedback!');
