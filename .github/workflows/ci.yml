@@ -34,4 +34,4 @@ jobs:
       - name: Run tests
         run: |
           pip install pytest
-          pytest web_app/tests -q
+          pytest web_app/tests -v --tb=short
