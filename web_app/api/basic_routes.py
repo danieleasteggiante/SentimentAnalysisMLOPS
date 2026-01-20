@@ -49,6 +49,7 @@ async def feedback(request: Request, db: db_dependency):
         data = await request.json()
         feedback_result = data.get("feedback")
         username = data.get("username")
+        LOGGER.info("Saving feedback - Text: %s, User Label: %s", feedback_result, username)
         db.add(Feedback(feedback_result=feedback_result, username=username))
         db.commit()
         LOGGER.info("Received feedback - Text: %s, User Label: %s", feedback, username)

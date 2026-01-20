@@ -250,7 +250,7 @@
                 }
                 const data = await resp.json();
                 const prediction = data.prediction[0];
-                resultEl.textContent = `Risultato: ${prediction.label} (${(prediction.score ?? '').toString()})`;
+                resultEl.textContent = `Risultato: ${prediction.label} (${(prediction.score.toFixed(2) ?? '').toString()})`;
                 resultEl.classList.remove('hidden');
                 feedbackControls.classList.remove('hidden');
             } catch (err) {
@@ -271,26 +271,26 @@
             sendFeedback('DISLIKE')
         }
 
-        async function sendFeedback(type) {
-            const text = (textarea.value || '').trim();
-            const usename = document.getElementById("usename")
-            if (usename.value === "") {
+        function hideFeedbackObjects() {
+            feedbackControls.classList.add('hidden');
+            textarea.value = '';
+            resultEl.classList.add('hidden');
+        }
+
+        function sendFeedback(feedback) {
+            const usename = document.getElementById("usename").value
+            if (usename === "") {
                 alert("Per favore, inserisci il tuo nome utente prima di inviare il feedback.");
                 return;
             }
             fetch('/static/feedback', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({"feedback": text, "usename": usename})
+                body: JSON.stringify({"feedback": feedback, "username": usename})
             }).then((resp) => {
-                if (resp.ok) {
-                    alert('Grazie per il tuo feedback!');
-                    return
-                }
-                alert(`Errore nell'invio del feedback: ${resp.status} ${resp.statusText}`);
-            }).catch((err) => {
-                alert(`Errore nell'invio del feedback: ${err.message}`);
-            });
+                alert('Thanks! Your feedback has been sent.')
+                hideFeedbackObjects();
+            }).catch((err) => {alert(`Error: ${err.message}`)});
         }
 
     });

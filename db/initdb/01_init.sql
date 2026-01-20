@@ -15,3 +15,10 @@ CREATE TABLE IF NOT EXISTS prediction_evaluation (
   evaluation TEXT NOT NULL,
   time_stamp TIMESTAMP DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS feedbacks (
+  id SERIAL PRIMARY KEY,
+  username TEXT NOT NULL,
+  feedback_result TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT now()
+);
