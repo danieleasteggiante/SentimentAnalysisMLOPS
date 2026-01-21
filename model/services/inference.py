@@ -5,23 +5,12 @@ from entity.ModelVersion import ModelVersion
 
 LOGGER = logging.getLogger(__name__)
 
-tokenizer = None
-model = None
-sentiment = None
-
 async def __load_model(db):
-    global tokenizer, model, sentiment
-    if sentiment is not None:
-        return
-    MODEL_NAME = await __get_model_name(db)
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
-    model.to(torch.device("cpu"))
-    model.eval()
-    sentiment = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=-1)
+    model_name = await __get_model_name(db)
+    return pipeline("sentiment-analysis", model=model_name, device=-1)
 
 async def inference(db, text):
-    await __load_model(db)
+    sentiment = await __load_model(db)
     result = sentiment(text)
     LOGGER.info(result)
     return result
