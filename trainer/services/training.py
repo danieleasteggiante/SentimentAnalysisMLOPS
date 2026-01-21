@@ -15,9 +15,9 @@ from entity.ModelVersion import ModelVersion
 LOGGER = logging.getLogger(__name__)
 
 class TrainModel:
-    def __init__(self, db):
+    def __init__(self, db, model_name):
         self.db = db
-        self.model_name = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+        self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name)
         self.data_files = {"train": "train.csv", "validation": "val.csv"}
