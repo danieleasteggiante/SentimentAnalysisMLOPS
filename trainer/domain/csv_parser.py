@@ -1,6 +1,6 @@
 from typing import List
 
-from trainer.entity.Feedback import Feedback
+from entity.Feedback import Feedback
 
 
 class CSV_parser:
@@ -15,5 +15,6 @@ class CSV_parser:
 
     def __process_feedback(self, feedback: Feedback, output_csv_path: str):
         with open(output_csv_path, 'a', encoding='utf-8') as f:
-            f.write(f'"{feedback.message_text.replace("\"", "\"\"")}";{feedback.feedback_result}\n')
+            line = feedback.message_text + ';' + str(feedback.feedback_result) + '\n'
+            f.write(line)
     

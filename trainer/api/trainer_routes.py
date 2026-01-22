@@ -3,9 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter
 from sqlalchemy.orm import Session
 
-from entity.InferenceRequest import InferenceRequest
-from services.inference import inference
-from trainer.domain.trainer import TrainerWrapper
+from domain.trainer import TrainerWrapper
 from services.download import download_and_save_model
 
 from config.database import get_db

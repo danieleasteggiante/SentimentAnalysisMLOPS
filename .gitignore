@@ -10,3 +10,6 @@ web_app/.idea
 web_app/__pycache__
 .__pycache__
 .pytest_cache
+trainer/.idea
+trainer/.venv
+utils

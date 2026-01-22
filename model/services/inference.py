@@ -1,22 +1,37 @@
-import torch
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+import asyncio
+
+from transformers import pipeline
 from config.logger import logging
 from entity.ModelVersion import ModelVersion
 
 LOGGER = logging.getLogger(__name__)
 
+_model_name = None
+_revision = None
+_pipeline = None
+
 async def __load_model(db):
-    model_name = await __get_model_name(db)
-    return pipeline("sentiment-analysis", model=model_name, device=-1)
+    LOGGER.info("Download pipeline for the first time")
+    global _model_name, _revision
+    _model_name, _revision = await __get_model_name(db)
+    return await asyncio.to_thread(
+        lambda: pipeline("sentiment-analysis", model=_model_name, revision=_revision, device=-1)
+    )
+
+async def __get_pipeline(db):
+    LOGGER.info("Loading model pipeline")
+    global _pipeline
+    if _pipeline is None:
+        _pipeline = await __load_model(db)
+    return _pipeline
 
 async def inference(db, text):
-    sentiment = await __load_model(db)
+    sentiment = await __get_pipeline(db)
     result = sentiment(text)
     LOGGER.info(result)
     return result
 
 async def __get_model_name(db):
-    result = db.query(ModelVersion).order_by(ModelVersion.version.desc()).first()
-    if result.version is None:
-        return f"{result.model_name}"
-    return f"{result.model_name}_v{result.version}"
+    result = db.query(ModelVersion).order_by(ModelVersion.registration_date.desc()).first()
+    LOGGER.info(f"Using model: {result.model_name} version: {result.version}")
+    return result.model_name, result.version

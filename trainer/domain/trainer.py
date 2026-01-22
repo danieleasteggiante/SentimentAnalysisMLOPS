@@ -1,6 +1,6 @@
 from datasets import load_dataset
-from trainer.config.constant import TRAIN_DATA_PATH
-from trainer.entity import Feedback, Start_training_logs
+from config.constant import TRAIN_DATA_PATH
+from entity import Feedback, Start_training_logs
 from transformers import (
     AutoTokenizer,
     AutoModelForSequenceClassification,
