@@ -278,15 +278,15 @@
         }
 
         function sendFeedback(feedback) {
-            const usename = document.getElementById("usename").value
-            if (usename === "") {
+            const username = document.getElementById("username").value
+            if (username === "") {
                 alert("Per favore, inserisci il tuo nome utente prima di inviare il feedback.");
                 return;
             }
             fetch('/static/feedback', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({"feedback": feedback, "username": usename})
+                body: JSON.stringify({"feedback": feedback, "message_text": textarea.value, "username": username})
             }).then((resp) => {
                 alert('Thanks! Your feedback has been sent.')
                 hideFeedbackObjects();

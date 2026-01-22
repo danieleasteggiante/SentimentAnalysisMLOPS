@@ -48,11 +48,12 @@ async def feedback(request: Request, db: db_dependency):
     try:
         data = await request.json()
         feedback_result = data.get("feedback")
+        message_text = data.get("message_text")
         username = data.get("username")
         LOGGER.info("Saving feedback - Text: %s, User Label: %s", feedback_result, username)
-        db.add(Feedback(feedback_result=feedback_result, username=username))
+        db.add(Feedback(feedback_result=feedback_result, message_text=message_text, username=username))
         db.commit()
-        LOGGER.info("Received feedback - Text: %s, User Label: %s", feedback, username)
+        LOGGER.info("Received feedback - Text: %s, User Label: %s", feedback_result, username)
         return JSONResponse(status_code=200, content={"message": "Feedback received"})
     except Exception as e:
         LOGGER.error("Error saving feedback: %s", e)

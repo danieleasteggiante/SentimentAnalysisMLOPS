@@ -19,6 +19,13 @@ CREATE TABLE IF NOT EXISTS prediction_evaluation (
 CREATE TABLE IF NOT EXISTS feedbacks (
   id SERIAL PRIMARY KEY,
   username TEXT NOT NULL,
+  message_text TEXT NOT NULL,
   feedback_result TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS start_training_logs (
+  id SERIAL PRIMARY KEY,
+  feedback_id TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT now()
 );

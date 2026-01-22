@@ -1,0 +1,19 @@
+from typing import List
+
+from trainer.entity.Feedback import Feedback
+
+
+class CSV_parser:
+ 
+    def parse(self, feedback_sql_result: List[Feedback], output_csv_path: str):
+        idx, chunk_size, length = 0, 1000, len(feedback_sql_result)
+        while idx < length:
+            chunk_size = min(chunk_size, length - idx)
+            for f in feedback_sql_result[idx: idx + chunk_size]:
+                self.__process_feedback(f, output_csv_path)
+            idx += chunk_size
+
+    def __process_feedback(self, feedback: Feedback, output_csv_path: str):
+        with open(output_csv_path, 'a', encoding='utf-8') as f:
+            f.write(f'"{feedback.message_text.replace("\"", "\"\"")}";{feedback.feedback_result}\n')
+    

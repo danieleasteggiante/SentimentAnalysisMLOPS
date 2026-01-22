@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from entity.InferenceRequest import InferenceRequest
 from services.inference import inference
-from services.training import TrainModel
+from trainer.domain.trainer import TrainerWrapper
 from services.download import download_and_save_model
 
 from config.database import get_db
@@ -18,7 +18,7 @@ db_dependency = Annotated[Session, Depends(get_db)]
 @router.get("/train")
 async def index(db: db_dependency):
     try:
-        trainer = TrainModel(db)
+        trainer = TrainerWrapper(db)
         trainer.train()
         return trainer.evaluate()
     except Exception as e:
