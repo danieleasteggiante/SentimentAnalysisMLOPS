@@ -35,3 +35,39 @@ jobs:
         run: |
           pip install pytest
           pytest web_app/tests -v --tb=short
+          
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.c && github.ref == 'refs/heads/master'  && contains(github.event.head_commit.message, 'deploy')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to VPS
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+          
+          ssh -i ~/.ssh/deploy_key $VPS_USER@$VPS_HOST << 'EOF'
+            cd /path/to/your/app
+            git pull origin master
+            docker-compose down
+            docker-compose up -d --build
+          EOF
+
+
+# GitHub Secrets - Aggiungi questi secrets nel repository (Settings → Secrets and variables → Actions):
+# SSH_PRIVATE_KEY: chiave SSH privata per accedere alla VPS
+# VPS_HOST: indirizzo IP o hostname della VPS
+# VPS_USER: username SSH (es. root o ubuntu)
+# Sulla VPS, assicurati di:
+# 
+# Aggiungere la chiave pubblica SSH a ~/.ssh/authorized_keys
+# Avere Docker e Docker Compose installati
+# Clonare il repository in /path/to/your/app (modifica il path nel workflow)
+# Avere un file docker-compose.yml nella root del progetto
