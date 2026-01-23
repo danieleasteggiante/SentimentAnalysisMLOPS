@@ -23,8 +23,11 @@ class TrainerWrapper:
         self.downloader = downloader
         self.csv_parser = csv_parser
         self.__download_model_and_tokenizer()
+        self.__prepare_data()
+
+    def __prepare_data(self):
         query_result = self.__get_data_from_db()
-        csv_parser.parse(query_result, TRAIN_DATA_PATH)
+        self.csv_parser.parse(query_result, TRAIN_DATA_PATH)
 
     def __get_data_from_db(self):
         idx_to_start = self.db.query(Start_training_logs).order_by(Start_training_logs.created_at.desc()).first()
