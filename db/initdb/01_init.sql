@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS model_versions (
   id SERIAL PRIMARY KEY,
   model_name TEXT NOT NULL,
-  version INTEGER NOT NULL,
+  version TEXT NOT NULL,
   registration_date TIMESTAMP DEFAULT now()
 );
 

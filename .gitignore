@@ -12,4 +12,5 @@ web_app/__pycache__
 .pytest_cache
 trainer/.idea
 trainer/.venv
+utils/*
 utils
