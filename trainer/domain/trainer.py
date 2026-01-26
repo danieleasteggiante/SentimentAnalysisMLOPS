@@ -1,5 +1,5 @@
 from datasets import load_dataset
-from config.constant import MODEL_SAVE_PATH, RANDOM_SEED, TRAIN_DATA_PATH
+from config.constant import EVALUATION_STRATEGY, LEARNING_RATE, MODEL_SAVE_PATH, NUM_TRAIN_EPOCHS, PER_DEVICE_EVAL_BATCH_SIZE, PER_DEVICE_TRAIN_BATCH_SIZE, RANDOM_SEED, RESULTS_DIR, TRAIN_DATA_PATH, WEIGHT_DECAY
 from entity import Feedback, Start_training_logs
 from trainer.domain.csv_parser import CSV_parser
 from transformers import (
@@ -101,29 +101,10 @@ class TrainerWrapper:
         }
 
     def train(self):
+        LOGGER.info("Starting model training.")
         data_collator = DataCollatorWithPadding(self.tokenizer)
-        training_args = TrainingArguments(
-            output_dir="../outputs",
-            save_strategy="epoch",
-            per_device_train_batch_size=16,
-            per_device_eval_batch_size=32,
-            num_train_epochs=3,
-            learning_rate=2e-5,
-            load_best_model_at_end=True,
-            metric_for_best_model="accuracy",
-            logging_steps=50,
-            save_total_limit=2,
-        )
-
-        self.trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=self.tokenized["train"],
-            eval_dataset=self.tokenized["validation"],
-            tokenizer=self.tokenizer,
-            data_collator=data_collator,
-            compute_metrics=self.__compute_metrics,
-        )
+        training_args = self.__get_training_args()
+        self.trainer = self.__get_trainer(training_args, data_collator)
         self.trainer.train()
         self.__evaluate(metrics_step="new")
 
@@ -142,24 +123,35 @@ class TrainerWrapper:
         return False
 
     def __save_model(self, huggingface_client_wrapper):
+        LOGGER.info("Saving the new model to the database and local storage.")
         self.trainer.save_model(f"{self.PATH}/{self.FILE_NAME}_v{self.version + 1}")
         self.db.save(ModelVersion(model_name=self.FILE_NAME, version=self.version + 1))
         self.db.commit()
+        huggingface_client_wrapper.upload_model(
+            model_path=f"{self.PATH}/{self.FILE_NAME}_v{self.version + 1}",
+            model_name=self.FILE_NAME,
+            version=self.version + 1,
+        )
+        LOGGER.info("New model saved successfully.")
 
-
-
-
-"""
-        self.data_files = {"train": "train.csv", "validation": "val.csv"}
-        self.ds = load_dataset("csv", data_files=self.data_files)
-        self.num_labels = len(set(self.ds["train"]["label"]))
-        self.tokenized = self.ds.map(self.__preprocess, batched=True, remove_columns=["text"])
-        self.accuracy = evaluate.load("accuracy")
-        self.f1 = evaluate.load("f1")
-        self.version = self.__get_version()
-        self.PATH = "../outputs"
-        self.FILE_NAME = "model_state"
-        LOGGER.info("Num labels dataset:", self.num_labels)
-        LOGGER.info("Model num_labels:", self.model.config.num_labels)
-
-"""
+    def __get_training_args(self):
+        return TrainingArguments(
+            output_dir=RESULTS_DIR,
+            evaluation_strategy=EVALUATION_STRATEGY,
+            learning_rate=LEARNING_RATE,
+            per_device_train_batch_size=PER_DEVICE_TRAIN_BATCH_SIZE,
+            per_device_eval_batch_size=PER_DEVICE_EVAL_BATCH_SIZE,
+            num_train_epochs=NUM_TRAIN_EPOCHS,
+            weight_decay=WEIGHT_DECAY,
+        )
+    
+    def __get_trainer(self, training_args, data_collator):
+        return Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=self.tokenized["train"],
+            eval_dataset=self.tokenized["validation"],
+            tokenizer=self.tokenizer,
+            data_collator=data_collator,
+            compute_metrics=self.__compute_metrics,
+        )

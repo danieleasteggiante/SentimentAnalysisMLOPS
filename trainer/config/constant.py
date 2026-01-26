@@ -1,3 +1,11 @@
 TRAIN_DATA_PATH = "data/sentiment_analysis_train.csv"
 MODEL_SAVE_PATH = "../models/"
 RANDOM_SEED = 42
+OUTPUT_DIR = "../models/output"
+RESULTS_DIR = "../models/results"
+EVALUATION_STRATEGY = "epoch"
+LEARNING_RATE = 2e-5
+PER_DEVICE_TRAIN_BATCH_SIZE = 16
+PER_DEVICE_EVAL_BATCH_SIZE = 16
+NUM_TRAIN_EPOCHS = 3
+WEIGHT_DECAY = 0.01
