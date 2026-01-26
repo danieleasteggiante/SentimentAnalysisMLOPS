@@ -20,6 +20,6 @@ class CSV_parser:
 
     def __process_feedback(self, feedback: Feedback, output_csv_path: str):
         with open(output_csv_path, 'a', encoding='utf-8') as f:
-            line = feedback.message_text + ';' + str(feedback.feedback_result) + '\n'
+            line = feedback.message_text + ';' + feedback.label + '\n'
             f.write(line)
     

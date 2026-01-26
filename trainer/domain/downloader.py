@@ -6,10 +6,10 @@ from transformers import (
 
 class Downloader:
         
-    def download(self, model_uri, destination_path):
-        LOGGER.info(f"Downloading from {model_uri} to {destination_path}")
-        tokenizer = AutoTokenizer.from_pretrained(model_uri)
-        model = AutoModelForSequenceClassification.from_pretrained(model_uri)
+    def download(self, model, revision, destination_path):
+        LOGGER.info(f"Downloading from {model} {revision} to {destination_path}")
+        tokenizer = AutoTokenizer.from_pretrained(model, revision=revision)
+        model = AutoModelForSequenceClassification.from_pretrained(model, revision=revision)
         self.__save_model(model, tokenizer, destination_path)
         LOGGER.info("Download completed")
         return tokenizer, model

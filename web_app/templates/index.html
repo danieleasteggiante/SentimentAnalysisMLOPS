@@ -221,6 +221,7 @@
         const dislikeBtn = document.getElementById('dislikeBtn');
         const resultEl = document.getElementById('predictionResult');
         const feedbackControls = document.getElementById('feedbackControls');
+        let currentPrediction = null;
         makePredictionBtn.addEventListener('click', makePrediction);
         likeBtn.addEventListener('click', like);
         dislikeBtn.addEventListener('click', dislike);
@@ -250,6 +251,7 @@
                 }
                 const data = await resp.json();
                 const prediction = data.prediction[0];
+                currentPrediction = prediction.label;
                 resultEl.textContent = `Risultato: ${prediction.label} (${(prediction.score.toFixed(2) ?? '').toString()})`;
                 resultEl.classList.remove('hidden');
                 feedbackControls.classList.remove('hidden');
@@ -286,7 +288,7 @@
             fetch('/static/feedback', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({"feedback": feedback, "message_text": textarea.value, "username": username})
+                body: JSON.stringify({"feedback": feedback, "message_text": textarea.value, "label" : currentPrediction, "username": username})
             }).then((resp) => {
                 alert('Thanks! Your feedback has been sent.')
                 hideFeedbackObjects();

@@ -1,7 +1,7 @@
 from datasets import load_dataset
 from config.constant import EVALUATION_STRATEGY, LEARNING_RATE, MODEL_SAVE_PATH, NUM_TRAIN_EPOCHS, PER_DEVICE_EVAL_BATCH_SIZE, PER_DEVICE_TRAIN_BATCH_SIZE, RANDOM_SEED, RESULTS_DIR, TRAIN_DATA_PATH, WEIGHT_DECAY
-from entity import Feedback, Start_training_logs
-from trainer.domain.csv_parser import CSV_parser
+from entity.Feedback import Feedback
+from domain.csv_parser import CSV_parser
 from transformers import (
     AutoTokenizer,
     AutoModelForSequenceClassification,
@@ -77,20 +77,17 @@ class TrainerWrapper:
 
     def __get_data_from_db(self):
         LOGGER.info("Fetching data from the database for training.")
-        idx_to_start = self.db.query(Start_training_logs).order_by(Start_training_logs.created_at.desc()).first()
-        if not idx_to_start:
-            return self.db.query(Feedback).all()
-        return self.db.query(Feedback).filter(Feedback.id >= idx_to_start.feedback_id).all()
+        return self.db.query(Feedback).where(Feedback.feedback_result != 'LIKED').all()
 
     def __download_model_and_tokenizer(self):
         LOGGER.info("Downloading model and tokenizer.")
-        model_uri = self.__get_model_name()
-        self.tokenizer, self.model = self.downloader.download(model_uri=model_uri, destination_path=MODEL_SAVE_PATH)
+        self.model = self.__get_model_name()
+        self.tokenizer, self.model = self.downloader.download(model_uri=self.model.model_name, model_version=self.model.version, destination_path=MODEL_SAVE_PATH)
 
     def __get_model_name(self):
         LOGGER.info("Fetching the latest model version from the database.")
-        self.model = self.db.query(ModelVersion).order_by(ModelVersion.version.desc()).first()
-        return f"{self.model.model_name}_v{self.model.version}.pkl"
+        return self.db.query(ModelVersion).order_by(ModelVersion.version.desc()).first()
+
 
     def __preprocess(self, batch):
         return self.tokenizer(batch["text"], truncation=True, padding="longest")

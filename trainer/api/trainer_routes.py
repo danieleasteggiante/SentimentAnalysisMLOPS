@@ -7,9 +7,9 @@ from domain.trainer import TrainerWrapper
 
 from config.database import get_db
 from config.logger import logging
-from trainer.domain.csv_parser import CSV_parser
-from trainer.domain.downloader import Downloader
-from trainer.domain.huffingface_client_wrapper import Huggingface_client_wrapper
+from domain.csv_parser import CSV_parser
+from domain.downloader import Downloader
+from domain.huffingface_client_wrapper import Huggingface_client_wrapper
 
 LOGGER = logging.getLogger(__name__)
 router = APIRouter()
