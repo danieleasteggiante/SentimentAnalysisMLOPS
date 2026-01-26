@@ -1,6 +1,7 @@
 from datasets import load_dataset
-from config.constant import TRAIN_DATA_PATH
+from config.constant import MODEL_SAVE_PATH, RANDOM_SEED, TRAIN_DATA_PATH
 from entity import Feedback, Start_training_logs
+from trainer.domain.csv_parser import CSV_parser
 from transformers import (
     AutoTokenizer,
     AutoModelForSequenceClassification,
@@ -10,6 +11,7 @@ from transformers import (
     pipeline,
 )
 import evaluate
+from sklearn.model_selection import train_test_split
 import numpy as np
 from config.logger import logging
 from entity.ModelVersion import ModelVersion
@@ -18,28 +20,72 @@ from domain.downloader import Downloader
 LOGGER = logging.getLogger(__name__)
 
 class TrainerWrapper:
-    def __init__(self, db, downloader, csv_parser):
+    def __init__(self, db, downloader: Downloader, csv_parser: CSV_parser):
         self.db = db
         self.downloader = downloader
         self.csv_parser = csv_parser
+        self.__metrics_results = {"current": {}, "new": {}}
         self.__download_model_and_tokenizer()
-        self.__prepare_data()
+        self.__parsing_in_csv()
+        self.__load_dataset()
+        self.__tokenize()
+        self.__load_metrics_functions()
+        self.__evaluate()
 
-    def __prepare_data(self):
+    def __evaluate(self, dataset_name="test", metrics_step="current"):
+        LOGGER.info(f"Evaluating {metrics_step} model on {dataset_name} dataset.")
+        trainer = Trainer(model=self.model, tokenizer=self.tokenizer, compute_metrics=self.__compute_metrics)
+        eval_results = trainer.evaluate(self.tokenized[dataset_name])
+        self.__metrics_results[metrics_step] = {
+            "accuracy": eval_results.get("eval_accuracy", 0),
+            "f1_macro": eval_results.get("eval_f1_macro", 0),
+            "loss": eval_results.get("eval_loss", 0),
+        }
+    
+    def __load_metrics_functions(self):
+        LOGGER.info("Setting up evaluation metrics.")
+        self.accuracy = evaluate.load("accuracy")
+        self.f1 = evaluate.load("f1")
+        LOGGER.info("Evaluation metrics set up successfully.")
+
+    def __tokenize(self):
+        LOGGER.info("Tokenizing dataset for training.")
+        self.tokenized = {
+            split: self.dataset[split].map(self.__preprocess, batched=True, remove_columns=["text"])
+            for split in ["train", "validation", "test"]
+        }
+
+    def __split_dataset(self, full_dataset, treshold=0.3):
+        train_test = full_dataset.train_test_split(test_size=treshold, seed=RANDOM_SEED)
+        return train_test["train"], train_test["test"]
+
+    def __load_dataset(self):
+        LOGGER.info("Loading dataset from CSV for training.")
+        full_dataset = load_dataset("csv", data_files=TRAIN_DATA_PATH)["train"]
+        train_val, test = self.__split_dataset(full_dataset)
+        train, val = self.__split_dataset(train_val, treshold=0.2)
+        self.dataset = { "train": train, "validation": val, "test": test}
+        LOGGER.info(f"Dataset split: train={len(train)}, val={len(val)}, test={len(test)}")
+
+    def __parsing_in_csv(self):
+        LOGGER.info("Parsing data from database to CSV for training.")
         query_result = self.__get_data_from_db()
         self.csv_parser.parse(query_result, TRAIN_DATA_PATH)
 
     def __get_data_from_db(self):
+        LOGGER.info("Fetching data from the database for training.")
         idx_to_start = self.db.query(Start_training_logs).order_by(Start_training_logs.created_at.desc()).first()
         if not idx_to_start:
             return self.db.query(Feedback).all()
         return self.db.query(Feedback).filter(Feedback.id >= idx_to_start.feedback_id).all()
 
     def __download_model_and_tokenizer(self):
+        LOGGER.info("Downloading model and tokenizer.")
         model_uri = self.__get_model_name()
-        self.tokenizer, self.model = self.downloader.download(model_uri=model_uri, destination_path="../models")
+        self.tokenizer, self.model = self.downloader.download(model_uri=model_uri, destination_path=MODEL_SAVE_PATH)
 
     def __get_model_name(self):
+        LOGGER.info("Fetching the latest model version from the database.")
         self.model = self.db.query(ModelVersion).order_by(ModelVersion.version.desc()).first()
         return f"{self.model.model_name}_v{self.model.version}.pkl"
 
@@ -56,7 +102,6 @@ class TrainerWrapper:
 
     def train(self):
         data_collator = DataCollatorWithPadding(self.tokenizer)
-
         training_args = TrainingArguments(
             output_dir="../outputs",
             save_strategy="epoch",
@@ -70,7 +115,7 @@ class TrainerWrapper:
             save_total_limit=2,
         )
 
-        trainer = TrainerWrapper(
+        self.trainer = Trainer(
             model=self.model,
             args=training_args,
             train_dataset=self.tokenized["train"],
@@ -79,26 +124,28 @@ class TrainerWrapper:
             data_collator=data_collator,
             compute_metrics=self.__compute_metrics,
         )
+        self.trainer.train()
+        self.__evaluate(metrics_step="new")
 
-        trainer.train()
-        sentiment = self.__save_model(trainer)
-        LOGGER.info(sentiment("Covid cases are increasing fast!"))
-        LOGGER.info("Model trained and saved successfully.")
+    def compare_models(self, huggingface_client_wrapper):
+        LOGGER.info("Comparing current and new model metrics.")
+        current_metrics = self.__metrics_results["current"]
+        new_metrics = self.__metrics_results["new"]
+        LOGGER.info(f"Current Model Metrics: {current_metrics} - New Model Metrics: {new_metrics}")
+        
+        if new_metrics["accuracy"] > current_metrics["accuracy"]:
+            LOGGER.info("New model outperforms the current model. Saving new model.")
+            self.__save_model(huggingface_client_wrapper)
+            return True
+        
+        LOGGER.info("New model does not outperform the current model. Discarding new model.")
+        return False
 
-    def __save_model(self, trainer):
-        trainer.save_model(f"{self.PATH}/{self.FILE_NAME}_v{self.version + 1}")
+    def __save_model(self, huggingface_client_wrapper):
+        self.trainer.save_model(f"{self.PATH}/{self.FILE_NAME}_v{self.version + 1}")
         self.db.save(ModelVersion(model_name=self.FILE_NAME, version=self.version + 1))
         self.db.commit()
-        sentiment = pipeline("sentiment-analysis", model="outputs/best_model", tokenizer=self.tokenizer)
-        return sentiment
 
-    def evaluate(self):
-        trainer = TrainerWrapper(
-            model=self.model,
-            compute_metrics=self.__compute_metrics,
-        )
-        results = trainer.evaluate(self.tokenized["validation"])
-        LOGGER.info("Evaluation results:", results)
 
 
 
