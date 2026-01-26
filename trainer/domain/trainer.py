@@ -25,6 +25,9 @@ class TrainerWrapper:
         self.downloader = downloader
         self.csv_parser = csv_parser
         self.__metrics_results = {"current": {}, "new": {}}
+        self.__load_component()
+
+    def __load_component(self):
         self.__download_model_and_tokenizer()
         self.__parsing_in_csv()
         self.__load_dataset()
@@ -108,7 +111,7 @@ class TrainerWrapper:
         self.trainer.train()
         self.__evaluate(metrics_step="new")
 
-    def compare_models(self, huggingface_client_wrapper):
+    def persist_model(self, huggingface_client_wrapper):
         LOGGER.info("Comparing current and new model metrics.")
         current_metrics = self.__metrics_results["current"]
         new_metrics = self.__metrics_results["new"]
