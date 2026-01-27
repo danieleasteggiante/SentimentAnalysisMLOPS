@@ -10,13 +10,25 @@ from config.logger import logging
 from domain.csv_parser import CSV_parser
 from domain.downloader import Downloader
 from domain.huffingface_client_wrapper import Huggingface_client_wrapper
+import asyncio
+
 
 LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 db_dependency = Annotated[Session, Depends(get_db)]
 
 @router.get("/train")
-async def index(db: db_dependency):
+async def train(db: db_dependency):
+    asyncio.create_task(__training_task(db))
+    return {"message": "Model training started"}
+
+
+def __get_trainer_wrapper(db: Session) -> TrainerWrapper:
+    downloader = Downloader()
+    csv_parser = CSV_parser()
+    return TrainerWrapper(db, downloader, csv_parser)
+
+async def __training_task(db: Session):
     try:
         LOGGER.info("Starting model training process.")
         trainerw = __get_trainer_wrapper(db)
@@ -27,8 +39,3 @@ async def index(db: db_dependency):
     except Exception as e:
         LOGGER.error("Error training model: %s", e)
         return {"message": "Error training model"}
-
-def __get_trainer_wrapper(db: Session) -> TrainerWrapper:
-    downloader = Downloader()
-    csv_parser = CSV_parser(db)
-    return TrainerWrapper(db, downloader, csv_parser)

@@ -3,9 +3,16 @@ from entity.Feedback import Feedback
 
 class CSV_parser:
 
+    def __init__(self):
+        self.label_mapping = {
+            "positive": 1,
+            "negative": 0,
+            "neutral": 2
+        }
+
     def __set_header(self, output_csv_path: str):
         with open(output_csv_path, 'w', encoding='utf-8') as f:
-            f.write('text;label\n')
+            f.write('"text";"labels"\n')
  
     def parse(self, feedback_sql_result: List[Feedback], output_csv_path: str):
         self.__set_header(output_csv_path)
@@ -16,8 +23,9 @@ class CSV_parser:
                 self.__process_feedback(f, output_csv_path)
             idx += chunk_size
 
+
     def __process_feedback(self, feedback: Feedback, output_csv_path: str):
         with open(output_csv_path, 'a', encoding='utf-8') as f:
-            line = feedback.message_text + ';' + feedback.label + '\n'
+            line = '"' + feedback.message_text + '";"' + str(self.label_mapping[feedback.labels]) + '"\n'
             f.write(line)
     

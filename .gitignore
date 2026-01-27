@@ -16,3 +16,5 @@ utils/*
 utils
 data/*
 data
+models
+models/*

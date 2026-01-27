@@ -50,7 +50,7 @@ async def feedback(request: Request, db: db_dependency):
         username = data.get("username")
         label = data.get("label")
         LOGGER.info("Saving feedback - Text: %s, User Label: %s", feedback_result, username)
-        db.add(Feedback(feedback_result=feedback_result, message_text=message_text, label=label, username=username))
+        db.add(Feedback(feedback_result=feedback_result, message_text=message_text, labels=label, username=username))
         db.commit()
         LOGGER.info("Received feedback - Text: %s, User Label: %s", feedback_result, username)
         return JSONResponse(status_code=200, content={"message": "Feedback received"})

@@ -1,17 +1,15 @@
 from datasets import load_dataset
-from config.constant import EVALUATION_STRATEGY, LEARNING_RATE, MODEL_SAVE_PATH, NUM_TRAIN_EPOCHS, PER_DEVICE_EVAL_BATCH_SIZE, PER_DEVICE_TRAIN_BATCH_SIZE, RANDOM_SEED, RESULTS_DIR, TRAIN_DATA_PATH, WEIGHT_DECAY
+from config.constant import EVALUATION_STRATEGY, LEARNING_RATE, MODEL_SAVE_PATH, NUM_TRAIN_EPOCHS, \
+    PER_DEVICE_EVAL_BATCH_SIZE, PER_DEVICE_TRAIN_BATCH_SIZE, RANDOM_SEED, RESULTS_DIR, TRAIN_DATA_PATH, WEIGHT_DECAY, \
+    PREFIX_HUGGINGFACE
 from entity.Feedback import Feedback
 from domain.csv_parser import CSV_parser
 from transformers import (
-    AutoTokenizer,
-    AutoModelForSequenceClassification,
     DataCollatorWithPadding,
     TrainingArguments,
     Trainer,
-    pipeline,
 )
 import evaluate
-from sklearn.model_selection import train_test_split
 import numpy as np
 from config.logger import logging
 from entity.ModelVersion import ModelVersion
@@ -21,6 +19,7 @@ LOGGER = logging.getLogger(__name__)
 
 class TrainerWrapper:
     def __init__(self, db, downloader: Downloader, csv_parser: CSV_parser):
+        self.trainer = None
         self.db = db
         self.downloader = downloader
         self.csv_parser = csv_parser
@@ -59,16 +58,17 @@ class TrainerWrapper:
         }
 
     def __split_dataset(self, full_dataset, treshold=0.3):
+        LOGGER.info("Split dataset into train and test sets.")
         train_test = full_dataset.train_test_split(test_size=treshold, seed=RANDOM_SEED)
         return train_test["train"], train_test["test"]
 
     def __load_dataset(self):
         LOGGER.info("Loading dataset from CSV for training.")
-        full_dataset = load_dataset("csv", data_files=TRAIN_DATA_PATH)["train"]
+        full_dataset = load_dataset("csv", data_files='./'+TRAIN_DATA_PATH, delimiter=";", quotechar='"')["train"]
         train_val, test = self.__split_dataset(full_dataset)
         train, val = self.__split_dataset(train_val, treshold=0.2)
         self.dataset = { "train": train, "validation": val, "test": test}
-        LOGGER.info(f"Dataset split: train={len(train)}, val={len(val)}, test={len(test)}")
+        LOGGER.info(f"Dataset split: train={len(train)}, val={len(val)}, test={len(test)}, Dataset features: {self.dataset['train'].features}")
 
     def __parsing_in_csv(self):
         LOGGER.info("Parsing data from database to CSV for training.")
@@ -77,19 +77,21 @@ class TrainerWrapper:
 
     def __get_data_from_db(self):
         LOGGER.info("Fetching data from the database for training.")
-        return self.db.query(Feedback).where(Feedback.feedback_result == 'LIKED').all()
+        return self.db.query(Feedback).where(Feedback.feedback_result == 'LIKE').all()
 
     def __download_model_and_tokenizer(self):
         LOGGER.info("Downloading model and tokenizer.")
-        self.model = self.__get_model_name()
-        self.tokenizer, self.model = self.downloader.download(model_uri=self.model.model_name, model_version=self.model.version, destination_path=MODEL_SAVE_PATH)
+        self.model_version = self.__get_model_name()
+        self.tokenizer, self.model= self.downloader.download(model=self.model_version.model_name, revision=self.model_version.version, destination_path=MODEL_SAVE_PATH)
 
     def __get_model_name(self):
         LOGGER.info("Fetching the latest model version from the database.")
         return self.db.query(ModelVersion).order_by(ModelVersion.version.desc()).first()
 
     def __preprocess(self, batch):
-        return self.tokenizer(batch["text"], truncation=True, padding="longest")
+        tokenized = self.tokenizer(batch["text"],truncation=True,padding="longest")
+        tokenized["labels"] = batch["labels"]
+        return tokenized
 
     def __compute_metrics(self, eval_pred):
         logits, labels = eval_pred
@@ -123,20 +125,24 @@ class TrainerWrapper:
 
     def __save_model(self, huggingface_client_wrapper):
         LOGGER.info("Saving the new model to the database and local storage.")
-        self.trainer.save_model(f"{self.PATH}/{self.FILE_NAME}_v{self.version + 1}")
-        self.db.save(ModelVersion(model_name=self.FILE_NAME, version=self.version + 1))
+        new_version = self.__get_new_version()
+        self.db.add(ModelVersion(model_name=self.model_version.model_name, version=new_version))
         self.db.commit()
         huggingface_client_wrapper.upload_model(
-            model_path=f"{self.PATH}/{self.FILE_NAME}_v{self.version + 1}",
-            model_name=self.FILE_NAME,
-            version=self.version + 1,
+            model_path=f"{PREFIX_HUGGINGFACE}/{self.model_version.model_name}",
+            model_name=self.model_version.model_name,
+            version=new_version,
         )
         LOGGER.info("New model saved successfully.")
+
+    def __get_new_version(self):
+        MAJOR, MINOR, TAGVERSION = self.model_version.version.split(".")
+        TAGVERSION = str(int(TAGVERSION) + 1)
+        return f"v{MAJOR}.{MINOR}.{TAGVERSION}"
 
     def __get_training_args(self):
         return TrainingArguments(
             output_dir=RESULTS_DIR,
-            evaluation_strategy=EVALUATION_STRATEGY,
             learning_rate=LEARNING_RATE,
             per_device_train_batch_size=PER_DEVICE_TRAIN_BATCH_SIZE,
             per_device_eval_batch_size=PER_DEVICE_EVAL_BATCH_SIZE,
