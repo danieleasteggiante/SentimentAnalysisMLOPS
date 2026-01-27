@@ -1,4 +1,4 @@
-ROM pytorch/pytorch:2.1.0-cpu
+FROM pytorch/pytorch:2.1.0-cpu
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
