@@ -18,3 +18,5 @@ data/*
 data
 models
 models/*
+trainer/__pycache__
+trainer/.env

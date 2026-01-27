@@ -9,30 +9,41 @@ class Huggingface_client_wrapper:
 
     def __init__(self):
         self.api = HfApi()
-        
-    def __get_repo_id(self):
-        user_info = self.api.whoami()
-        username = user_info['name']
-        self.repo_id = f"{username}/{self.model_name}"
+        self.model_path = None
+        self.model_name = None
+        self.version = None
+        self.repo_id = None
+        self.token = None
 
     def __login(self):
         token = os.getenv("HUGGINGFACE_HUB_TOKEN")
         if not token:
             raise ValueError("Huggingface Hub token not found.")
         login(token=token)
+        self.api = HfApi(token=token)
+        self.token = token
         LOGGER.info("Logged in to Huggingface Hub successfully.")
-    
+
+    def __get_repo_id(self):
+        user_info = self.api.whoami()
+        username = user_info.get('name')
+        if not username:
+            raise RuntimeError("Unable to determine Huggingface username via whoami().")
+        self.repo_id = f"{username}/{self.model_name}"
+
     def upload_model(self, model_path: str, model_name: str, version: int):
         self.__initialize_args(model_path, model_name, version)
-        LOGGER.info(f"Uploading model to {self.repo_id} (version {self.version})...") 
-        create_repo(repo_id=self.repo_id, exist_ok=True, repo_type="model", private=False)
+        LOGGER.info(f"Uploading model to {self.repo_id} (version {self.version})...")
+        # Use the authenticated API to create the repo
+        self.api.create_repo(repo_id=self.repo_id, exist_ok=True, repo_type="model", private=False)
         commit_message = f"Upload model version {self.version}"
-        self.__upload_files(commit_message)
-        self.__create_tag(commit_message)       
+        # Pass correct args to upload files
+        self.__upload_files(self.model_path, self.repo_id, commit_message)
+        self.__create_tag()
         model_url = f"https://huggingface.co/{self.repo_id}"
         LOGGER.info(f"Model successfully uploaded to {model_url}")
         return model_url
-    
+
     def __upload_files(self, file_path: str, repo_id: str, commit_message: str):
         self.api.upload_file(
             path_or_fileobj=file_path,
@@ -42,13 +53,13 @@ class Huggingface_client_wrapper:
             repo_type="model"
         )
         LOGGER.info(f"Uploaded file {file_path} to {repo_id} with message: {commit_message}")
-    
+
     def __create_tag(self):
         self.api.create_tag(
-                repo_id=self.repo_id,
-                tag=f"v{self.version}",
-                tag_message=f"Version {self.version}",
-                repo_type="model"
+            repo_id=self.repo_id,
+            tag=f"v{self.version}",
+            tag_message=f"Version {self.version}",
+            repo_type="model"
         )
         LOGGER.info(f"Created tag v{self.version} for {self.repo_id} with message: Version {self.version}")
 
@@ -56,5 +67,6 @@ class Huggingface_client_wrapper:
         self.model_path = model_path
         self.model_name = model_name
         self.version = version
-        self.__get_repo_id()
+        # Login first, then get repo id (whoami requires authentication)
         self.__login()
+        self.__get_repo_id()

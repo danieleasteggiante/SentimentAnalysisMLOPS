@@ -9,7 +9,7 @@ class Downloader:
         
     def download(self, model, revision, destination_path):
         LOGGER.info(f"Downloading from {model} {revision} to {destination_path}")
-        if self.__is_already_downloaded(destination_path):
+        if self.__is_already_downloaded(model, destination_path):
             return self.__load_existing_model(destination_path)
         return self.__downloaded_model(model, revision, destination_path)
 
@@ -19,8 +19,8 @@ class Downloader:
         tokenizer.save_pretrained(destination_path)
         LOGGER.info(f"Model saved to {destination_path}")
 
-    def __is_already_downloaded(self, destination_path):
-        return os.path.exists(destination_path)
+    def __is_already_downloaded(self, model, destination_path):
+        return os.path.exists(destination_path + '/' + model + '*')
 
     def __load_existing_model(self, destination_path):
         LOGGER.info(f"Loading existing model from {destination_path}")
