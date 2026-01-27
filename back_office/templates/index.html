@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BackOffice - Monitoring</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #00bcd4;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: #00bcd4;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: transparent;
+        }
+
+        thead {
+            background-color: rgba(0, 188, 212, 0.1);
+        }
+
+        th {
+            padding: 15px;
+            text-align: center;
+            font-weight: 500;
+            color: #00bcd4;
+            border: 1px solid rgba(0, 188, 212, 0.3);
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+        }
+
+        th:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        th:last-child {
+            border-top-right-radius: 8px;
+        }
+
+        td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(224, 224, 224, 0.2);
+            color: #e0e0e0;
+        }
+
+        tbody tr {
+            transition: background-color 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background-color: rgba(0, 188, 212, 0.08);
+        }
+
+        tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 8px;
+        }
+
+        tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 8px;
+        }
+
+        .btn-edit {
+            background-color: #00bcd4;
+            color: #1a1a1a;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-edit:hover {
+            background-color: #00acc1;
+        }
+
+        .edit-input {
+            width: 100%;
+            padding: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid #00bcd4;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+        }
+
+        .edit-input:focus {
+            outline: none;
+            border-color: #00acc1;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-save, .btn-cancel {
+            padding: 6px 12px;
+            margin: 5px 2px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .btn-save {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .btn-cancel {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .label-cell {
+            min-width: 150px;
+        }
+
+        .message-cell {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>BACKOFFICE - MONITORING THE FEEDBACK</h1>
+        </header>
+
+        <div class="table-wrapper">
+            <table id="feedbackTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Message Text</th>
+                        <th>Label</th>
+                        <th>Feedback Result</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Sample data - Replace with dynamic data from backend -->
+                    <tr>
+                        <td>1</td>
+                        <td>user123</td>
+                        <td class="message-cell">This is a sample feedback message</td>
+                        <td class="label-cell">
+                            <span class="label-text">positive</span>
+                        </td>
+                        <td>correct</td>
+                        <td>2026-01-27 10:30</td>
+                        <td>
+                            <button class="btn-edit" onclick="editLabel(this)">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>user456</td>
+                        <td class="message-cell">Another example of user feedback</td>
+                        <td class="label-cell">
+                            <span class="label-text">negative</span>
+                        </td>
+                        <td>incorrect</td>
+                        <td>2026-01-27 11:15</td>
+                        <td>
+                            <button class="btn-edit" onclick="editLabel(this)">Edit</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function editLabel(button) {
+            const row = button.closest('tr');
+            const labelCell = row.querySelector('.label-cell');
+            const labelText = labelCell.querySelector('.label-text');
+            const currentLabel = labelText.textContent;
+
+            labelCell.innerHTML = `
+                <input type="text" class="edit-input" value="${currentLabel}" />
+                <div>
+                    <button class="btn-save" onclick="saveLabel(this)">Save</button>
+                    <button class="btn-cancel" onclick="cancelEdit(this, '${currentLabel}')">Cancel</button>
+                </div>
+            `;
+
+            labelCell.querySelector('.edit-input').focus();
+        }
+
+        function saveLabel(button) {
+            const row = button.closest('tr');
+            const labelCell = row.querySelector('.label-cell');
+            const input = labelCell.querySelector('.edit-input');
+            const newLabel = input.value;
+            const feedbackId = row.querySelector('td:first-child').textContent;
+
+            // TODO: Implement API call to update label
+            // fetch(`/api/feedback/${feedbackId}`, {
+            //     method: 'PUT',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ label: newLabel })
+            // }).then(response => response.json())
+            //   .then(data => {
+            //       labelCell.innerHTML = `<span class="label-text">${newLabel}</span>`;
+            //   });
+
+            // For now, just update the UI
+            labelCell.innerHTML = `<span class="label-text">${newLabel}</span>`;
+        }
+
+        function cancelEdit(button, originalLabel) {
+            const labelCell = button.closest('.label-cell');
+            labelCell.innerHTML = `<span class="label-text">${originalLabel}</span>`;
+        }
+    </script>
+</body>
+</html>
