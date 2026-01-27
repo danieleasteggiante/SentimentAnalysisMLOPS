@@ -88,7 +88,6 @@ class TrainerWrapper:
         LOGGER.info("Fetching the latest model version from the database.")
         return self.db.query(ModelVersion).order_by(ModelVersion.version.desc()).first()
 
-
     def __preprocess(self, batch):
         return self.tokenizer(batch["text"], truncation=True, padding="longest")
 

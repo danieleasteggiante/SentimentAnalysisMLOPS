@@ -10,7 +10,6 @@ class Huggingface_client_wrapper:
     def __init__(self):
         self.api = HfApi()
         
-
     def __get_repo_id(self):
         user_info = self.api.whoami()
         username = user_info['name']

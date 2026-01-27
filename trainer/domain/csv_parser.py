@@ -1,7 +1,5 @@
 from typing import List
-
 from entity.Feedback import Feedback
-
 
 class CSV_parser:
 
