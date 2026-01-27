@@ -1,42 +1,20 @@
-# Stage 1: Build dependencies
-FROM python:3.10-slim AS builder
+ROM pytorch/pytorch:2.1.0-cpu
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-
-WORKDIR /build
-
-# Installa build tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
-
-# Crea virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Copia requirements
-COPY requirements.txt .
-
-# Installa dipendenze nel venv
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install torch==2.1.0+cpu --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Stage 2: Runtime
-FROM python:3.10-slim
-
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Copia solo il venv dallo stage builder
-COPY --from=builder /opt/venv /opt/venv
+COPY requirements.txt .
 
-# Copia l'applicazione
+# Installa dipendenze (cache layer separato)
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
+  CMD python -c "import torch; print(torch.__version__)" || exit 1
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
