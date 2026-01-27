@@ -18,16 +18,18 @@ db_dependency = Annotated[Session, Depends(get_db)]
 @router.get("/train")
 async def index(db: db_dependency):
     try:
-        downloader = Downloader()
-        csv_parser = CSV_parser()
+        LOGGER.info("Starting model training process.")
+        trainerw = __get_trainer_wrapper(db)
         huffingface_client_wrapper = Huggingface_client_wrapper()
-        trainer = TrainerWrapper(db, downloader, csv_parser)
-        trainer.train()
-        trainer.persist_model(huffingface_client_wrapper)
+        trainerw.train()
+        trainerw.persist_model(huffingface_client_wrapper)
         return {"message": "Model trained successfully"}
     except Exception as e:
         LOGGER.error("Error training model: %s", e)
         return {"message": "Error training model"}
 
 
-
+def __get_trainer_wrapper(db: Session) -> TrainerWrapper:
+    downloader = Downloader()
+    csv_parser = CSV_parser(db)
+    return TrainerWrapper(db, downloader, csv_parser)
