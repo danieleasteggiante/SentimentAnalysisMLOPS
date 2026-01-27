@@ -14,3 +14,5 @@ trainer/.idea
 trainer/.venv
 utils/*
 utils
+data/*
+data

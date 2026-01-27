@@ -47,6 +47,7 @@ services:
 #    volumes:
 #      - db_data:/var/lib/postgresql/data
 #      - hf-cache:/root/.cache/huggingface
+#      - ./data:/app/data
 
   app:
     build: ./web_app
