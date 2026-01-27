@@ -21,8 +21,6 @@ templates = Jinja2Templates(directory="templates")  # crea la cartella `template
 def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "message": "Ciao da FastAPI"})
 
-
-
 @router.get("/contacts/")
 def index(request: Request):
     return templates.TemplateResponse("contacts.html", {"request": request, "message": "Daniele Asteggiante"})

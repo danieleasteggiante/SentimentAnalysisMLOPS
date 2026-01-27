@@ -28,7 +28,6 @@ async def index(db: db_dependency):
         LOGGER.error("Error training model: %s", e)
         return {"message": "Error training model"}
 
-
 def __get_trainer_wrapper(db: Session) -> TrainerWrapper:
     downloader = Downloader()
     csv_parser = CSV_parser(db)

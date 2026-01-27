@@ -77,7 +77,7 @@ class TrainerWrapper:
 
     def __get_data_from_db(self):
         LOGGER.info("Fetching data from the database for training.")
-        return self.db.query(Feedback).where(Feedback.feedback_result != 'LIKED').all()
+        return self.db.query(Feedback).where(Feedback.feedback_result == 'LIKED').all()
 
     def __download_model_and_tokenizer(self):
         LOGGER.info("Downloading model and tokenizer.")
