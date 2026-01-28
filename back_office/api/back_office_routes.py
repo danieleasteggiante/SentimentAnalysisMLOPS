@@ -23,10 +23,10 @@ def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "message": "Ciao da FastAPI"})
 
 @router.get("/predictions/{from_date}/{to_date}", response_model=List[FeedbackResponse])
-def get_predictions(from_date: datetime, to_date: str, db: db_dependency):
+def get_predictions(db: db_dependency,from_date: str = None, to_date: str = None):
     LOGGER.info(f"Fetching predictions from {from_date} to {to_date}")
     from_dt = datetime.fromisoformat(from_date) or datetime.min
-    to_dt = datetime.fromisoformat(to_date) or datetime.max    
+    to_dt = datetime.fromisoformat(to_date) or datetime.max
     return db.query(Feedback).filter(Feedback.created_at >= from_dt, Feedback.created_at <= to_dt).all()
 
 

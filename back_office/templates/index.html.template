@@ -176,34 +176,22 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Sample data - Replace with dynamic data from backend -->
+                <tbody id="feedbackBody">
+                    {% for feedback in feedbacks %}
                     <tr>
-                        <td>1</td>
-                        <td>user123</td>
-                        <td class="message-cell">This is a sample feedback message</td>
+                        <td>{{ feedback.id }}</td>
+                        <td>{{ feedback.username }}</td>
+                        <td class="message-cell" title="{{ feedback.message_text }}">{{ feedback.message_text }}</td>
                         <td class="label-cell">
-                            <span class="label-text">positive</span>
+                            <span class="label-text">{{ feedback.label }}</span>
                         </td>
-                        <td>correct</td>
-                        <td>2026-01-27 10:30</td>
+                        <td>{{ feedback.feedback_result }}</td>
+                        <td>{{ feedback.created_at }}</td>
                         <td>
                             <button class="btn-edit" onclick="editLabel(this)">Edit</button>
                         </td>
                     </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>user456</td>
-                        <td class="message-cell">Another example of user feedback</td>
-                        <td class="label-cell">
-                            <span class="label-text">negative</span>
-                        </td>
-                        <td>incorrect</td>
-                        <td>2026-01-27 11:15</td>
-                        <td>
-                            <button class="btn-edit" onclick="editLabel(this)">Edit</button>
-                        </td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -234,18 +222,26 @@
             const newLabel = input.value;
             const feedbackId = row.querySelector('td:first-child').textContent;
 
-            // TODO: Implement API call to update label
-            // fetch(`/api/feedback/${feedbackId}`, {
-            //     method: 'PUT',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ label: newLabel })
-            // }).then(response => response.json())
-            //   .then(data => {
-            //       labelCell.innerHTML = `<span class="label-text">${newLabel}</span>`;
-            //   });
-
-            // For now, just update the UI
-            labelCell.innerHTML = `<span class="label-text">${newLabel}</span>`;
+            fetch(`/api/feedback/${feedbackId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ label: newLabel })
+            })
+            .then(response => {
+                if (!response.ok) 
+                    throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                labelCell.innerHTML = `<span class="label-text">${data.label}</span>`;
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+                alert('Failed to update label. Please try again.');
+                labelCell.innerHTML = `<span class="label-text">${input.value}</span>`;
+            });
         }
 
         function cancelEdit(button, originalLabel) {
