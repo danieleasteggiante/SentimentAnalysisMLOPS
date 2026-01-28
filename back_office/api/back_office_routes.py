@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse
 
-from back_office.model.feedback_response import FeedbackResponse
+from model.feedback_response import FeedbackResponse
 from config.constants import MODEL_SERVER_URL
 from config.database import get_db
 from config.logger import logging
@@ -18,27 +18,24 @@ db_dependency = Annotated[Session, Depends(get_db)]
 templates = Jinja2Templates(directory="templates") 
 
 
-@router.get("/index/")
-def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "message": "Ciao da FastAPI"})
-
-@router.get("/predictions/{from_date}/{to_date}", response_model=List[FeedbackResponse])
-def get_predictions(from_date: datetime, to_date: str, db: db_dependency):
-    LOGGER.info(f"Fetching predictions from {from_date} to {to_date}")
-    from_dt = datetime.fromisoformat(from_date) or datetime.min
-    to_dt = datetime.fromisoformat(to_date) or datetime.max    
-    return db.query(Feedback).filter(Feedback.created_at >= from_dt, Feedback.created_at <= to_dt).all()
+@router.get("/index")
+def index(request: Request, db: db_dependency, from_date: str = None, to_date: str = None):
+    if from_date is not None or to_date is not None:
+        result = db.query(Feedback).filter(Feedback.created_at >= datetime.fromisoformat(from_date), Feedback.created_at <= datetime.fromisoformat(to_date)).all()
+        return templates.TemplateResponse("index.html", {"request": request, "feedbacks": result})
+    result = db.query(Feedback).all()
+    return templates.TemplateResponse("index.html", {"request": request, "feedbacks": result})
 
 
-@router.post("/edit-label/")
-def edit_label(feedback_id: int, new_label: str, db: db_dependency):
+@router.get("/edit-label/{feedback_id}/{new_label}")
+def edit_label(db: db_dependency, feedback_id: str, new_label: str):
     LOGGER.info(f"Editing label for feedback ID {feedback_id} to {new_label}")
     feedback_entry = db.query(Feedback).filter(Feedback.id == feedback_id).first()
     if not feedback_entry:
         return JSONResponse(content={"error": "Feedback entry not found"}, status_code=404)
-    feedback_entry.label = new_label
+    feedback_entry.labels = new_label
     db.commit()
-    return JSONResponse(content={"message": "Label updated successfully"})
+    return JSONResponse(content={"labels": feedback_entry.labels})
 
 
 
