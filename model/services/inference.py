@@ -35,3 +35,8 @@ async def __get_model_name(db):
     result = db.query(ModelVersion).order_by(ModelVersion.registration_date.desc()).first()
     LOGGER.info(f"Using model: {result.model_name} version: {result.version}")
     return result.model_name, result.version
+
+async def unload_pipeline():
+    global _pipeline
+    LOGGER.info("Unloading model pipeline")
+    _pipeline = None
