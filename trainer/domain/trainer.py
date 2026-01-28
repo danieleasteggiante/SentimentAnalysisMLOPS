@@ -1,5 +1,5 @@
 from datasets import load_dataset
-from config.constant import EVALUATION_STRATEGY, LEARNING_RATE, MODEL_SAVE_PATH, NUM_TRAIN_EPOCHS, \
+from config.constant import LEARNING_RATE, MODEL_SAVE_PATH, NUM_TRAIN_EPOCHS, \
     PER_DEVICE_EVAL_BATCH_SIZE, PER_DEVICE_TRAIN_BATCH_SIZE, RANDOM_SEED, RESULTS_DIR, TRAIN_DATA_PATH, WEIGHT_DECAY, \
     PREFIX_HUGGINGFACE
 from entity.Feedback import Feedback
