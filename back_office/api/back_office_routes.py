@@ -15,7 +15,7 @@ from datetime import datetime
 LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 db_dependency = Annotated[Session, Depends(get_db)]
-templates = Jinja2Templates(directory="templates")  # crea la cartella `templates`
+templates = Jinja2Templates(directory="templates") 
 
 
 @router.get("/index/")

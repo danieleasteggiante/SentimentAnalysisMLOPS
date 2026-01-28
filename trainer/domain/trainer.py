@@ -136,7 +136,7 @@ class TrainerWrapper:
         LOGGER.info("New model saved successfully.")
 
     def __get_new_version(self):
-        MAJOR, MINOR, TAGVERSION = self.model_version.version.split(".")
+        MAJOR, MINOR, TAGVERSION = self.model_version.version.split("v")[1].split(".")
         TAGVERSION = str(int(TAGVERSION) + 1)
         return f"v{MAJOR}.{MINOR}.{TAGVERSION}"
 
