@@ -33,21 +33,21 @@ services:
       - db_data:/var/lib/postgresql/data
       - hf-cache:/root/.cache/huggingface
 
-#  trainer:
-#    build: ./trainer
-#    ports:
-#      - "8505:8080"
-#    environment:
-#      DATABASE_URL: postgresql+psycopg2://admin:admin@db:5432/prediction
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#    networks:
-#      - app-network
-#    volumes:
-#      - db_data:/var/lib/postgresql/data
-#      - hf-cache:/root/.cache/huggingface
-#      - ./data:/app/data
+  trainer:
+    build: ./trainer
+    ports:
+      - "8505:8080"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://admin:admin@db:5432/prediction
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - hf-cache:/root/.cache/huggingface
+      - ./data:/app/data
 
   app:
     build: ./web_app

@@ -20,8 +20,10 @@ async def __load_model(db):
 
 async def __get_pipeline(db):
     LOGGER.info("Loading model pipeline")
-    global _pipeline
-    if _pipeline is None:
+    global _pipeline, _model_name, _revision
+    _, current_revision = await __get_model_name(db)
+    if _revision != current_revision or _pipeline is None:
+        LOGGER.info("Something changed, reloading: model_name=%s, old_revision=%s, new_revision=%s, pipeline_is_none=%s", _model_name, _revision, current_revision, _pipeline is None)
         _pipeline = await __load_model(db)
     return _pipeline
 
