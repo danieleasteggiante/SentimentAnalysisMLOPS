@@ -1,14 +1,18 @@
-FROM pytorch/pytorch:2.1.0-cpu
+FROM huggingface/transformers-pytorch-cpu:4.18.0
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# installa apt-clone come pacchetto di sistema prima di pip
+RUN apt-get update && apt-get install -y --no-install-recommends apt-clone && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 
-# Installa dipendenze (cache layer separato)
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
