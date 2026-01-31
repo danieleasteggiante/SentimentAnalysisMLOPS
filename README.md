@@ -1,5 +1,8 @@
 # Sentiment Analysis MLOps
 
+<img width="931" height="691" alt="MLOPS_project drawio" src="https://github.com/user-attachments/assets/c7d65cf4-e597-4e33-bf50-28f62397adaf" />
+
+
 Sistema di analisi del sentiment con architettura a microservizi orchestrata con `docker-compose`. Tutti i servizi girano su un server tramite `docker-compose up -d`.
 
 Questo progetto è una pipeline MLOps per l'analisi del sentiment che mette insieme interfaccia utente, automazione del training e deployment dei modelli in produzione. Gli utenti inviano testi tramite la web app e possono fornire feedback; il backoffice permette di gestire i dataset e avviare training manuali; il trainer esegue il fine tuning e aggiorna il model server che serve le inferenze; Grafana monitora le performance e invia alert se la qualità cala; il database PostgreSQL conserva predizioni, feedback e metadati. Il sistema è pensato per girare su un singolo server con docker compose, comunicare via nomi di servizio e essere esposto in modo sicuro tramite reverse proxy e TLS. Per provare rapidamente: esegui docker compose up -d e usa gli endpoint descritti nel README.
