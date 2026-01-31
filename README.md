@@ -99,5 +99,3 @@ Quindi per esempio l'endpoint di inferenza via web app sarà `http://76.13.8.56:
   - `docker compose logs -f <service>`
 - Controllare porte d'ascolto:
   - `ss -tulpn | grep LISTEN`
-- Test remoto:
-  - `curl http://<VPS_IP>:8501/health`
