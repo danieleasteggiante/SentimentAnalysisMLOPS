@@ -1,3 +1,4 @@
+import httpx
 from fastapi.params import Depends
 from typing import Annotated, List
 from fastapi import APIRouter, Request
@@ -5,8 +6,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse
 
-from model.feedback_response import FeedbackResponse
-from config.constants import MODEL_SERVER_URL
+from config.constants import TRAINER_URL
 from config.database import get_db
 from config.logger import logging
 from model.feedback import Feedback
@@ -37,6 +37,16 @@ def edit_label(db: db_dependency, feedback_id: str, new_label: str):
     db.commit()
     return JSONResponse(content={"labels": feedback_entry.labels})
 
+@router.get("/start-trainer")
+async def index(request: Request, db: db_dependency, from_date: str = None, to_date: str = None):
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(f"{TRAINER_URL}/api/train",timeout=10.0)
+
+        if resp.status_code == 200:
+            prediction = resp.json().get("message")
+            return JSONResponse(status_code=200, content={"prediction": prediction})
+
+        return JSONResponse(status_code=resp.status_code, content={"message": "Error from trainer server"})
 
 
 

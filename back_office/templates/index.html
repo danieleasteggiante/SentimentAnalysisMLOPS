@@ -155,56 +155,80 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
+        .btn-trainer {
+            background-color: #00bcd4;
+            color: #1a1a1a;
+            border: 1px solid rgba(0, 188, 212, 0.9);
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.08s ease;
+        }
+
+        .btn-trainer:hover {
+            background-color: #00acc1;
+            transform: translateY(-1px);
+        }
+
+        .btn-trainer:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>BACKOFFICE - MONITORING THE FEEDBACK</h1>
-        </header>
+<div class="container">
+    <header>
+        <h1>BACKOFFICE - MONITORING THE FEEDBACK</h1>
+        <button class="btn-trainer" id="start-training">Start trainer</button>
+    </header>
 
-        <div class="table-wrapper">
-            <table id="feedbackTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Username</th>
-                        <th>Message Text</th>
-                        <th>Label</th>
-                        <th>Feedback Result</th>
-                        <th>Created At</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="feedbackBody">
-                    {% for feedback in feedbacks %}
-                    <tr>
-                        <td>{{ feedback.id }}</td>
-                        <td>{{ feedback.username }}</td>
-                        <td class="message-cell" title="{{ feedback.message_text }}">{{ feedback.message_text }}</td>
-                        <td class="label-cell">
-                            <span class="label-text">{{ feedback.labels }}</span>
-                        </td>
-                        <td>{{ feedback.feedback_result }}</td>
-                        <td>{{ feedback.created_at }}</td>
-                        <td>
-                            <button class="btn-edit" onclick="editLabel(this)">Edit</button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="table-wrapper">
+        <table id="feedbackTable">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Message Text</th>
+                <th>Label</th>
+                <th>Feedback Result</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="feedbackBody">
+            {% for feedback in feedbacks %}
+            <tr>
+                <td>{{ feedback.id }}</td>
+                <td>{{ feedback.username }}</td>
+                <td class="message-cell" title="{{ feedback.message_text }}">{{ feedback.message_text }}</td>
+                <td class="label-cell">
+                    <span class="label-text">{{ feedback.labels }}</span>
+                </td>
+                <td>{{ feedback.feedback_result }}</td>
+                <td>{{ feedback.created_at }}</td>
+                <td>
+                    <button class="btn-edit" onclick="editLabel(this)">Edit</button>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
+</div>
 
-    <script>
-        function editLabel(button) {
-            const row = button.closest('tr');
-            const labelCell = row.querySelector('.label-cell');
-            const labelText = labelCell.querySelector('.label-text');
-            const currentLabel = labelText.textContent;
+<script>
+    const startTrainerBtn = document.getElementById('start-training');
+    startTrainerBtn.addEventListener('click', startTraining);
 
-            labelCell.innerHTML = `
+    function editLabel(button) {
+        const row = button.closest('tr');
+        const labelCell = row.querySelector('.label-cell');
+        const labelText = labelCell.querySelector('.label-text');
+        const currentLabel = labelText.textContent;
+
+        labelCell.innerHTML = `
                 <input type="text" class="edit-input" value="${currentLabel}" />
                 <div>
                     <button class="btn-save" onclick="saveLabel(this)">Save</button>
@@ -212,36 +236,48 @@
                 </div>
             `;
 
-            labelCell.querySelector('.edit-input').focus();
-        }
+        labelCell.querySelector('.edit-input').focus();
+    }
 
-        function saveLabel(button) {
-            const row = button.closest('tr');
-            const labelCell = row.querySelector('.label-cell');
-            const input = labelCell.querySelector('.edit-input');
-            const newLabel = input.value;
-            const feedbackId = row.querySelector('td:first-child').textContent;
-
-            fetch(`/back-office/edit-label/${feedbackId}/${newLabel}`)
+    function startTraining(event) {
+        console.log('Starting trainer...');
+        event?.preventDefault();
+        fetch('/back-office/start-trainer')
             .then(response => {
-                if (!response.ok)
-                    throw new Error('Network response was not ok');
+                if (!response.ok) throw new Error('Network response was not ok');
                 return response.json();
             })
-            .then(data => {
-                labelCell.innerHTML = `<span class="label-text">${data.labels}</span>`;
-            })
+            .then(data => alert('Trainer started successfully!'))
             .catch(error => {
                 console.error('There was a problem with the fetch operation:', error);
-                alert('Failed to update label. Please try again.');
-                labelCell.innerHTML = `<span class="label-text">${input.value}</span>`;
+                alert('Failed to start trainer. Please try again.');
             });
-        }
+    }
 
-        function cancelEdit(button, originalLabel) {
-            const labelCell = button.closest('.label-cell');
-            labelCell.innerHTML = `<span class="label-text">${originalLabel}</span>`;
-        }
-    </script>
+    function saveLabel(button) {
+        const row = button.closest('tr');
+        const labelCell = row.querySelector('.label-cell');
+        const input = labelCell.querySelector('.edit-input');
+        const newLabel = input.value;
+        const feedbackId = row.querySelector('td:first-child').textContent;
+
+        fetch(`/back-office/edit-label/${feedbackId}/${newLabel}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => labelCell.innerHTML = `<span class="label-text">${data.labels}</span>`)
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    alert('Failed to update label. Please try again.');
+                    labelCell.innerHTML = `<span class="label-text">${input.value}</span>`;
+                });
+    }
+
+    function cancelEdit(button, originalLabel) {
+        const labelCell = button.closest('.label-cell');
+        labelCell.innerHTML = `<span class="label-text">${originalLabel}</span>`;
+    }
+</script>
 </body>
 </html>

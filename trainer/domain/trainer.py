@@ -36,7 +36,7 @@ class TrainerWrapper:
 
     def __evaluate(self, dataset_name="test", metrics_step="current"):
         LOGGER.info(f"Evaluating {metrics_step} model on {dataset_name} dataset.")
-        trainer = Trainer(model=self.model, tokenizer=self.tokenizer, compute_metrics=self.__compute_metrics)
+        trainer = Trainer(model=self.model, args=self.__get_training_args(), compute_metrics=self.__compute_metrics)
         eval_results = trainer.evaluate(self.tokenized[dataset_name])
         self.__metrics_results[metrics_step] = {
             "accuracy": eval_results.get("eval_accuracy", 0),
@@ -156,7 +156,6 @@ class TrainerWrapper:
             args=training_args,
             train_dataset=self.tokenized["train"],
             eval_dataset=self.tokenized["validation"],
-            tokenizer=self.tokenizer,
             data_collator=data_collator,
             compute_metrics=self.__compute_metrics,
         )
