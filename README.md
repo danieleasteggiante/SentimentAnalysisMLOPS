@@ -1,100 +1,103 @@
 # Sentiment Analysis MLOps
 
-Sistema di analisi del sentiment con architettura a microservizi che include inferenza ML, raccolta feedback e monitoraggio delle performance.
+Sistema di analisi del sentiment con architettura a microservizi orchestrata con `docker-compose`. Tutti i servizi girano su un server tramite `docker-compose up -d`.
 
-## 🏗️ Architettura
+Questo progetto è una pipeline MLOps per l'analisi del sentiment che mette insieme interfaccia utente, automazione del training e deployment dei modelli in produzione. Gli utenti inviano testi tramite la web app e possono fornire feedback; il backoffice permette di gestire i dataset e avviare training manuali; il trainer esegue il fine tuning e aggiorna il model server che serve le inferenze; Grafana monitora le performance e invia alert se la qualità cala; il database PostgreSQL conserva predizioni, feedback e metadati. Il sistema è pensato per girare su un singolo server con docker compose, comunicare via nomi di servizio e essere esposto in modo sicuro tramite reverse proxy e TLS. Per provare rapidamente: esegui docker compose up -d e usa gli endpoint descritti nel README.
 
-Il progetto è composto da 4 componenti principali orchestrati con Docker Compose:
+L'indirizzo IP o dominio del server VPS dove gira il sistema è indicato come `<HOST>`.
+Il valore `<HOST>` reale é 76.13.8.56 
+Quindi per esempio l'endpoint di inferenza via web app sarà `http://76.13.8.56:8000/static/index`.
 
-### 1. **Web App (FastAPI)** 
-- **Porta**: `8000`
-- **Tecnologia**: FastAPI
-- **Funzioni**:
-  - Interfaccia web per l'analisi del sentiment
-  - API REST per richieste di inferenza
-  - Raccolta e registrazione del feedback degli utenti
-  - Persistenza dei dati su PostgreSQL
 
-### 2. **Model Server**
-- **Porta**: `8501`
-- **Funzioni**:
-  - Download automatico del modello di ML da Hugging Face
-  - Esposizione API per l'inferenza del sentiment
-  - Cache del modello per performance ottimali
-  - Comunicazione con il database per logging delle predizioni
+## Panoramica componenti
 
-### 3. **PostgreSQL Database**
-- **Porta**: `5555`
-- **Tecnologia**: PostgreSQL 15
-- **Funzioni**:
-  - Persistenza delle predizioni
-  - Storage del feedback degli utenti
-  - Metriche per l'analisi delle performance
-  - Inizializzazione automatica dello schema via `initdb`
+- Web App (UI + API) — porta `8000`
+  - UI principale: `GET /` \(serve `static/index`\)
+  - API inferenza: `POST /api/predict` — body JSON: `{ "text": "..." }`
+  - API feedback: `POST /api/feedback` — body JSON: `{ "prediction_id": "...", "feedback": "positive|negative|neutral", "note": "..." }`
+  - Health: `GET /health`
 
-### 4. **Grafana (Monitoring & Observability)**
-- **Porta**: `3000`
-- **Tecnologia**: Grafana
-- **Funzioni**:
-  - Connessione diretta al database PostgreSQL
-  - Dashboard per monitoraggio real-time delle predizioni
-  - Analisi delle performance del modello
-  - Visualizzazione dei feedback degli utenti
-  - Metriche di utilizzo del sistema
+- Backoffice (UI per dataset e training) — porta `8001`
+  - UI backoffice: `GET /backoffice/index`
+  - Avvio training manuale: `POST /backoffice/api/train` — opzionale payload per parametri di training
 
-## 🚀 Quick Start
+- Model (Model Server, API di inferenza) — porta `8501`
+  - Scarica e serve il modello corretto (cache + caricamento automatico)
+  - Endpoint inferenza: `POST /predict` — body JSON: `{ "text": "..." }`
 
-### Prerequisiti
-- Docker
-- Docker Compose
+- Trainer (servizio di fine-tuning e redeploy) — porta `8502`
+  - Scarica modello base da Hugging Face, esegue fine-tuning, aggiorna DB e triggera il redeploy del `model`
+  - Avvia training: `POST /train` — body JSON con dataset/config
 
-### Avvio del sistema
+- Grafana (monitoring & alerting) — porta `3000`
+  - Dashboard per performance e feedback
+  - Alert via e\-mail se il modello sotto\-performante
+  - Credenziali iniziali: admin / admin
 
-```bash
-# Clone del repository
-git clone https://github.com/danieleasteggiante/SentimentAnalysisMLOPS.git
-cd SentimentAnalysisMLOPS
+- DB (PostgreSQL) — porta host `5555`, porta container `5432`
+  - Schema `prediction` usato da tutti i componenti per predizioni, feedback e metadata di training
+  - Persistenza tramite volume `db_data`
 
-# Avvio di tutti i servizi
-docker-compose up -d
+## Endpoints rapidi (esempi curl)
 
-# Verifica dello stato dei container
-docker-compose ps
+- Inferenza via Web App (proxy verso `model` o direttamente)
+  - curl -X POST http://<HOST>:8000/api/predict -H "Content-Type: application/json" -d '{"text":"ottimo prodotto"}'
 
-# Visualizza i log
-docker-compose logs -f
-```
+- Inferenza diretta sul Model Server
+  - curl -X POST http://<HOST>:8501/predict -H "Content-Type: application/json" -d '{"text":"ottimo prodotto"}'
 
-### Accesso ai servizi
+- Inviare feedback
+  - curl -X POST http://<HOST>:8000/api/feedback -H "Content-Type: application/json" -d '{"prediction_id":"123","feedback":"negative","note":"falso positivo"}'
 
-- **Web App**: http://localhost:8000
-- **Model Server API**: http://localhost:8501
-- **Grafana Dashboard**: http://localhost:3000
-  - Username: `admin`
-  - Password: `admin`
-- **PostgreSQL**: `localhost:5555`
+- Avviare training dal Backoffice
+  - curl -X POST http://<HOST>:8001/backoffice/api/train -H "Content-Type: application/json" -d '{"dataset_id":"v1"}'
+
+## Volumi e persistenza
+
+- `db_data` — dati PostgreSQL
+- `grafana_data` — config e dashboard Grafana
+- eventuali cache modello (`hf-cache`) montate per evitare download ripetuti
+
+## Docker / Avvio
+
+- Avvia tutto:
+  - `docker compose up -d`
+- Stato container:
+  - `docker compose ps`
+- Log:
+  - `docker compose logs -f`
+
+## Grafana / Datasource
+
+- Al primo accesso in Grafana:
+  - Host datasource PostgreSQL (interno): `db:5432`
   - Database: `prediction`
   - User: `admin`
   - Password: `admin`
+  - SSL Mode: `disable`
 
-## 📊 Configurazione Grafana
+## CI/CD (pipeline sintetica)
 
-Al primo accesso a Grafana:
+- Workflow attivato su ogni push su repository (esempio GitHub Actions):
+  - Step 1: Esegui test unitari e di integrazione per la `web_app`
+    - comando: `python -m pytest web_app/tests/ -v`
+  - Step 2: Se il messaggio del commit contiene la parola chiave `deploy` viene eseguito il job di deploy:
+    - esempio action: connettersi via SSH al server e lanciare:
+      - `docker compose pull`
+      - `docker compose up -d --remove-orphans`
+  - Nota: il deploy automatico richiede chiavi SSH, segreti e permessi adeguati sul server.
 
-1. Login con credenziali `admin/admin`
-2. Il datasource PostgreSQL va configurato manualmente:
-   - **Host**: `db:5432`
-   - **Database**: `prediction`
-   - **User**: `admin`
-   - **Password**: `admin`
-   - **SSL Mode**: `disable`
+## Note operative
 
-Le configurazioni verranno salvate nel volume `grafana_data` e persistono tra i riavvii.
+- Assicurarsi che le versioni dei container siano compatibili prima del restore di volumi (es. `grafana_data`)
+- Se i servizi comunicano via DNS interno (`trainer`, `model`, `db`) usare i nomi dei servizi nel `docker-compose` (es. `http://model:8501`)
+- Per esposizione pubblica: usare reverse proxy (traefik/nginx) + TLS e aprire porte sul firewall del VPS (`ufw`/security group)
 
-## 🧪 Testing
+## Contatti / Troubleshooting rapido
 
-```bash
-# Esegui i test
-python -m pytest web_app/tests/ -v
-
-# Test
+- Verificare logs:
+  - `docker compose logs -f <service>`
+- Controllare porte d'ascolto:
+  - `ss -tulpn | grep LISTEN`
+- Test remoto:
+  - `curl http://<VPS_IP>:8501/health`
