@@ -23,7 +23,7 @@ Quindi per esempio l'endpoint di inferenza via web app sarà `http://76.13.8.56:
   - API feedback: `POST /api/feedback` — body JSON: `{ "prediction_id": "...", "feedback": "positive|negative|neutral", "note": "..." }`
   - Health: `GET /health`
 
-- Backoffice (UI per dataset e training) — porta `8501`
+- Backoffice (UI per dataset e training) — porta `8502`
   - UI backoffice: `GET /backoffice/index`
   - Avvio training manuale: `POST /backoffice/api/train` — opzionale payload per parametri di training
 
