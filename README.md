@@ -31,7 +31,7 @@ Quindi per esempio l'endpoint di inferenza via web app sarà `http://76.13.8.56:
   - Scarica e serve il modello corretto (cache + caricamento automatico)
   - Endpoint inferenza: `POST /predict` — body JSON: `{ "text": "..." }`
 
-- Trainer (servizio di fine-tuning e redeploy) — porta `8502`
+- Trainer (servizio di fine-tuning e redeploy) — porta `8505`
   - Scarica modello base da Hugging Face, esegue fine-tuning, aggiorna DB e triggera il redeploy del `model`
   - Avvia training: `POST /train` — body JSON con dataset/config
 
